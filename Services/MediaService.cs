@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace FamilyApp.API.Services
 {
@@ -21,16 +20,14 @@ namespace FamilyApp.API.Services
         private readonly string _sharedFolderId; // Google Drive folder ID for storing media
         private readonly EncryptionService _encryptionService;
         private readonly string _serverBaseUrl; // Base URL for serving files
-        private readonly ILogger<MediaService> _logger; // Add logger
 
-        public MediaService(IMongoClient client, string serverBaseUrl, string sharedFolderId, string serviceAccountJsonFilePath, EncryptionService encryptionService, ILogger<MediaService> logger)
+        public MediaService(IMongoClient client, string serverBaseUrl, string sharedFolderId, string serviceAccountJsonFilePath, EncryptionService encryptionService)
         {
             var database = client.GetDatabase("MyFamilyApp");
             _media = database.GetCollection<Media>("Media");
             _serverBaseUrl = serverBaseUrl;
             _sharedFolderId = sharedFolderId;
             _encryptionService = encryptionService;
-            _logger = logger; // Initialize logger
 
             // Authenticate using the service account
             var credential = GoogleCredential.FromFile(serviceAccountJsonFilePath)
@@ -46,69 +43,52 @@ namespace FamilyApp.API.Services
 
         public async Task<Media> AddMediaAsync(string description, List<string> persons, byte[] fileData, string filename, string fileType, string story)
         {
-            try
+            var encodedDescription = _encryptionService.Encrypt(description);
+            var encodedPersons = persons?.ConvertAll(person => _encryptionService.Encrypt(person)) ?? new List<string>();
+            var encodedStory = _encryptionService.Encrypt(story);
+
+            // Upload file to Google Drive
+            var fileId = await UploadFileToGoogleDrive(fileData, filename);
+
+            var media = new Media
             {
-                _logger.LogInformation("Adding new media file: {Filename}", filename);
+                Description = encodedDescription,
+                Persons = encodedPersons,
+                FilePath = fileId, // Store the Google Drive file ID
+                FileType = fileType,
+                Story = encodedStory
+            };
 
-                var encodedDescription = _encryptionService.Encrypt(description);
-                var encodedPersons = persons?.ConvertAll(person => _encryptionService.Encrypt(person)) ?? new List<string>();
-                var encodedStory = _encryptionService.Encrypt(story);
-
-                // Upload file to Google Drive
-                var fileId = await UploadFileToGoogleDrive(fileData, filename);
-
-                var media = new Media
-                {
-                    Description = encodedDescription,
-                    Persons = encodedPersons,
-                    FilePath = fileId, // Store the Google Drive file ID
-                    FileType = fileType,
-                    Story = encodedStory
-                };
-
-                await _media.InsertOneAsync(media);
-                _logger.LogInformation("Media file {Filename} added successfully with File ID: {FileId}", filename, fileId);
-
-                return media;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error adding media file: {Filename}", filename);
-                throw;
-            }
+            await _media.InsertOneAsync(media);
+            return media;
         }
 
         public async Task<Stream> GetMediaStreamAsync(string fileId)
         {
             try
             {
-                _logger.LogInformation("Fetching media stream for file ID: {FileId}", fileId);
-
                 var request = _driveService.Files.Get(fileId);
                 var stream = new MemoryStream();
                 await request.DownloadAsync(stream);
                 stream.Position = 0; // Reset stream position
-                _logger.LogInformation("Media stream fetched successfully for file ID: {FileId}", fileId);
                 return stream;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching media stream for file ID: {FileId}", fileId);
+                Console.WriteLine($"Error fetching media from Google Drive: {ex.Message}");
                 return null;
             }
         }
 
         public async Task<Media> GetMediaByIdAsync(string id)
         {
-            _logger.LogInformation("Fetching media by ID: {MediaId}", id);
+            // Fetch media by file path, since the ID is not ObjectId
             var media = await _media.Find(m => m.FilePath == id).FirstOrDefaultAsync();
             return DecodeMedia(media);
         }
 
         public async Task<PaginatedList<MediaDTO>> GetPaginatedMediaAsync(int pageNumber, int pageSize)
         {
-            _logger.LogInformation("Fetching paginated media - Page {PageNumber}, Page Size {PageSize}", pageNumber, pageSize);
-
             var totalRecords = await _media.CountDocumentsAsync(Builders<Media>.Filter.Empty);
             var mediaList = await _media.Find(Builders<Media>.Filter.Empty)
                                         .Skip((pageNumber - 1) * pageSize)
@@ -126,14 +106,11 @@ namespace FamilyApp.API.Services
                 Story = _encryptionService.Decrypt(m.Story ?? string.Empty)
             }).ToList();
 
-            _logger.LogInformation("Paginated media fetched successfully.");
             return new PaginatedList<MediaDTO>(mediaDTOs, (int)totalRecords, pageNumber, pageSize);
         }
 
         public async Task<PaginatedList<MediaDTO>> SearchMediaByPersonAsync(string person, int pageNumber, int pageSize)
         {
-            _logger.LogInformation("Searching media by person: {Person}", person);
-
             var allMedia = await _media.Find(Builders<Media>.Filter.Empty).ToListAsync();
             var filteredMedia = allMedia
                 .Where(m => m.Persons != null && m.Persons.Any(p => _encryptionService.Decrypt(p).IndexOf(person, StringComparison.OrdinalIgnoreCase) >= 0))
@@ -155,34 +132,20 @@ namespace FamilyApp.API.Services
                 Story = _encryptionService.Decrypt(m.Story ?? string.Empty)
             }).ToList();
 
-            _logger.LogInformation("Media search results returned for person: {Person}", person);
             return new PaginatedList<MediaDTO>(mediaDTOs, filteredMedia.Count, pageNumber, pageSize);
         }
 
         public async Task DeleteMediaAsync(string fileId)
         {
-            try
+            var media = await _media.Find(m => m.FilePath == fileId).FirstOrDefaultAsync();
+            if (media == null)
             {
-                _logger.LogInformation("Deleting media file with ID: {FileId}", fileId);
-
-                var media = await _media.Find(m => m.FilePath == fileId).FirstOrDefaultAsync();
-                if (media == null)
-                {
-                    _logger.LogWarning("Media file not found for ID: {FileId}", fileId);
-                    return;
-                }
-
-                // Delete file from Google Drive
-                await _driveService.Files.Delete(media.FilePath).ExecuteAsync();
-                await _media.DeleteOneAsync(m => m.FilePath == fileId);
-
-                _logger.LogInformation("Media file with ID {FileId} deleted successfully.", fileId);
+                return;
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting media file with ID: {FileId}", fileId);
-                throw;
-            }
+
+            // Delete file from Google Drive
+            await _driveService.Files.Delete(media.FilePath).ExecuteAsync();
+            await _media.DeleteOneAsync(m => m.FilePath == fileId);
         }
 
         private async Task<string> UploadFileToGoogleDrive(byte[] fileData, string filename)
@@ -195,8 +158,6 @@ namespace FamilyApp.API.Services
 
             try
             {
-                _logger.LogInformation("Uploading file to Google Drive: {Filename}", filename);
-
                 using (var stream = new MemoryStream(fileData))
                 {
                     var request = _driveService.Files.Create(fileMetadata, stream, "application/octet-stream");
@@ -208,13 +169,12 @@ namespace FamilyApp.API.Services
                         throw new Exception($"File upload failed: {result.Exception?.Message}");
                     }
 
-                    _logger.LogInformation("File uploaded to Google Drive successfully: {Filename}", filename);
                     return request.ResponseBody.Id;  // Return the file ID from Google Drive
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error uploading file to Google Drive: {Filename}", filename);
+                Console.WriteLine($"Error uploading file to Google Drive: {ex.Message}");
                 throw;
             }
         }
