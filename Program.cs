@@ -16,7 +16,7 @@ var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? build
 var encryptionKey = Environment.GetEnvironmentVariable("ENCRYPTION_KEY") ?? builder.Configuration["Encryption:Key"];
 var encryptionIV = Environment.GetEnvironmentVariable("ENCRYPTION_IV") ?? builder.Configuration["Encryption:IV"];
 var serverBaseUrl = Environment.GetEnvironmentVariable("SERVER_BASE_URL") ?? builder.Configuration["ServerBaseUrl"];
-var googleDriveServiceAccountJsonPath = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_JSON_PATH") ?? builder.Configuration["GoogleDrive:ServiceAccountJsonPath"];
+var googleDriveServiceAccountJsonPath = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS_JSON") ?? builder.Configuration["GoogleDrive:ServiceAccountJsonPath"];
 var googleDriveSharedFolderId = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_SHARED_FOLDER_ID") ?? builder.Configuration["GoogleDrive:SharedFolderId"];
 
 builder.Services.AddSingleton<IMongoClient, MongoClient>(s => new MongoClient(mongoConnectionString));
