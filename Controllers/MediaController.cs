@@ -10,7 +10,7 @@ namespace FamilyApp.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [EnableCors("AllowSpecificOrigin")] // Ensure CORS is applied specifically to this controller
+   
     public class MediaController : ControllerBase
     {
         private readonly MediaService _mediaService;
