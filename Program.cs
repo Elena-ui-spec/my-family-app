@@ -65,7 +65,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Allow CORS only for your frontend domain
-/*builder.Services.AddCors(options =>
+builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", builder =>
     {
@@ -74,8 +74,8 @@ builder.Services.AddSwaggerGen();
                .AllowAnyHeader()
                .AllowCredentials(); // Allow credentials (cookies, auth)
     });
-});*/
-builder.Services.AddCors(options =>
+});
+/*builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowLocalhost3000", builder =>
     {
@@ -84,7 +84,7 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader()
                .AllowCredentials();
     });
-});
+});*/
 
 // Increase the limits for form data
 builder.Services.Configure<FormOptions>(options =>
@@ -168,8 +168,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 // Use CORS with specific policy for your frontend domain
-//app.UseCors("AllowSpecificOrigin");
-app.UseCors("AllowLocalhost3000");
+app.UseCors("AllowSpecificOrigin");
+//app.UseCors("AllowLocalhost3000");
 
 app.UseAuthentication();
 app.UseAuthorization();
