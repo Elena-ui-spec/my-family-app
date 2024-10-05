@@ -140,6 +140,11 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll"); // Use the "AllowAll" CORS policy
 
 // Serve static files from the media directory
+if (!Directory.Exists(Path.Combine(builder.Environment.ContentRootPath, "media")))
+{
+    Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "media"));
+}
+
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(
