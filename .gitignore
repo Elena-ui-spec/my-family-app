@@ -6,6 +6,7 @@ decrypted_private_key.pem
 extracted_public_key.pem
 *.json
 .vs/
+.env
 
 
 node_modules/

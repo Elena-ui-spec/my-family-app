@@ -10,14 +10,14 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load sensitive data from appsettings.json
-var mongoConnectionString = builder.Configuration.GetConnectionString("MongoDb");
-var jwtSecretKey = builder.Configuration["Jwt:SecretKey"];
-var encryptionKey = builder.Configuration["Encryption:Key"];
-var encryptionIV = builder.Configuration["Encryption:IV"];
-var serverBaseUrl = builder.Configuration["ServerBaseUrl"];
-var googleDriveServiceAccountJsonPath = builder.Configuration["GoogleDrive:ServiceAccountJsonPath"];
-var googleDriveSharedFolderId = builder.Configuration["GoogleDrive:SharedFolderId"];
+// Load sensitive data from environment variables or fallback to appsettings.json
+var mongoConnectionString = Environment.GetEnvironmentVariable("MONGODB_CONNECTION_STRING") ?? builder.Configuration.GetConnectionString("MongoDb");
+var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? builder.Configuration["Jwt:SecretKey"];
+var encryptionKey = Environment.GetEnvironmentVariable("ENCRYPTION_KEY") ?? builder.Configuration["Encryption:Key"];
+var encryptionIV = Environment.GetEnvironmentVariable("ENCRYPTION_IV") ?? builder.Configuration["Encryption:IV"];
+var serverBaseUrl = Environment.GetEnvironmentVariable("SERVER_BASE_URL") ?? builder.Configuration["ServerBaseUrl"];
+var googleDriveServiceAccountJsonPath = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_JSON_PATH") ?? builder.Configuration["GoogleDrive:ServiceAccountJsonPath"];
+var googleDriveSharedFolderId = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_SHARED_FOLDER_ID") ?? builder.Configuration["GoogleDrive:SharedFolderId"];
 
 builder.Services.AddSingleton<IMongoClient, MongoClient>(s => new MongoClient(mongoConnectionString));
 builder.Services.AddScoped(s => s.GetRequiredService<IMongoClient>().GetDatabase("MyFamilyApp"));
