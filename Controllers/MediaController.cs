@@ -1,6 +1,7 @@
 ﻿using FamilyApp.API.Models;
 using FamilyApp.API.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ namespace FamilyApp.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors("AllowSpecificOrigin")] // Ensure CORS is applied specifically to this controller
     public class MediaController : ControllerBase
     {
         private readonly MediaService _mediaService;
@@ -16,6 +18,13 @@ namespace FamilyApp.API.Controllers
         public MediaController(MediaService mediaService)
         {
             _mediaService = mediaService;
+        }
+
+        // Add preflight request handler for OPTIONS
+        [HttpOptions]
+        public IActionResult HandlePreflightRequest()
+        {
+            return Ok();
         }
 
         [HttpPost("add")]

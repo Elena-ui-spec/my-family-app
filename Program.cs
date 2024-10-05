@@ -53,13 +53,12 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", builder =>
     {
-        builder.WithOrigins("https://ciucureanu-radacini.onrender.com") // Frontend URL
+        builder.WithOrigins("https://ciucureanu-radacini.onrender.com")
                .AllowAnyMethod()
                .AllowAnyHeader()
-               .AllowCredentials(); // Allow credentials
+               .AllowCredentials(); // Allow credentials (cookies, auth)
     });
 });
-
 
 // Increase the limits for form data
 builder.Services.Configure<FormOptions>(options =>
