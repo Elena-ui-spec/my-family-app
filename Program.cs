@@ -48,15 +48,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Allow CORS for specific origins (local development and production)
+// Allow all origins, methods, and headers for CORS (open CORS policy)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigin", builder =>
+    options.AddPolicy("AllowAll", builder =>
     {
-        builder.WithOrigins("https://ciucureanu-radacini.onrender.com")
+        builder.AllowAnyOrigin()
                .AllowAnyMethod()
-               .AllowAnyHeader()
-               .AllowCredentials(); // Allow credentials (cookies, auth)
+               .AllowAnyHeader(); // No credential requirement
     });
 });
 
@@ -141,8 +140,8 @@ using (var scope = app.Services.CreateScope())
 app.UseHttpsRedirection();
 app.UseRouting();
 
-// Use CORS between routing and endpoints
-app.UseCors("AllowSpecificOrigins");
+// Use CORS with open policy
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
