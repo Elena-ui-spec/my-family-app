@@ -19,6 +19,22 @@ var serverBaseUrl = Environment.GetEnvironmentVariable("SERVER_BASE_URL") ?? bui
 var googleDriveServiceAccountJson = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS_JSON"); // Get the JSON directly
 var googleDriveSharedFolderId = Environment.GetEnvironmentVariable("GOOGLE_DRIVE_SHARED_FOLDER_ID") ?? builder.Configuration["GoogleDrive:SharedFolderId"];
 
+if (string.IsNullOrEmpty(googleDriveServiceAccountJson))
+{
+    // Get the file path from appsettings.json
+    var googleServiceAccountFilePath = builder.Configuration["GoogleDrive:ServiceAccountJsonFilePath"];
+
+    // Ensure the file exists, then read it
+    if (File.Exists(googleServiceAccountFilePath))
+    {
+        googleDriveServiceAccountJson = await File.ReadAllTextAsync(googleServiceAccountFilePath);
+    }
+    else
+    {
+        throw new FileNotFoundException($"Google Drive service account JSON file not found at: {googleServiceAccountFilePath}");
+    }
+}
+
 builder.Services.AddSingleton<IMongoClient, MongoClient>(s => new MongoClient(mongoConnectionString));
 builder.Services.AddScoped(s => s.GetRequiredService<IMongoClient>().GetDatabase("MyFamilyApp"));
 
@@ -49,7 +65,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Allow CORS only for your frontend domain
-builder.Services.AddCors(options =>
+/*builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", builder =>
     {
@@ -57,6 +73,16 @@ builder.Services.AddCors(options =>
                .AllowAnyMethod()
                .AllowAnyHeader()
                .AllowCredentials(); // Allow credentials (cookies, auth)
+    });
+});*/
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost3000", builder =>
+    {
+        builder.WithOrigins("http://localhost:3000")
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .AllowCredentials();
     });
 });
 
@@ -142,7 +168,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 // Use CORS with specific policy for your frontend domain
-app.UseCors("AllowSpecificOrigin");
+//app.UseCors("AllowSpecificOrigin");
+app.UseCors("AllowLocalhost3000");
 
 app.UseAuthentication();
 app.UseAuthorization();

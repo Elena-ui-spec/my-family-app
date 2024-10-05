@@ -116,6 +116,13 @@ namespace FamilyApp.API.Services
                 .Where(m => m.Persons != null && m.Persons.Any(p => _encryptionService.Decrypt(p).IndexOf(person, StringComparison.OrdinalIgnoreCase) >= 0))
                 .ToList();
 
+            if (filteredMedia.Count == 0)
+            {
+                filteredMedia = allMedia
+                .Where(m => m.Description != null && _encryptionService.Decrypt(m.Description).Split(",").Any(p => p.IndexOf(person, StringComparison.OrdinalIgnoreCase) >= 0))
+                .ToList();
+            }
+
             var paginatedMedia = filteredMedia
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
