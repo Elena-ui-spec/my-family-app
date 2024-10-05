@@ -5,6 +5,8 @@
 decrypted_private_key.pem
 extracted_public_key.pem
 *.json
+.vs/
+
 
 node_modules/
 package-lock.json
