@@ -48,7 +48,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Allow all CORS origins, methods, and headers
+// Allow CORS for specific origins (local development and production)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", builder =>
@@ -137,8 +137,15 @@ using (var scope = app.Services.CreateScope())
     await userService.EnsureAdminUserExistsAsync();
 }
 
-app.UseCors("AllowSpecificOrigin");
+// Middleware pipeline setup
 app.UseHttpsRedirection();
+app.UseRouting();
+
+// Use CORS between routing and endpoints
+app.UseCors("AllowSpecificOrigins");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Serve static files from the media directory
 if (!Directory.Exists(Path.Combine(builder.Environment.ContentRootPath, "media")))
@@ -148,14 +155,9 @@ if (!Directory.Exists(Path.Combine(builder.Environment.ContentRootPath, "media")
 
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(builder.Environment.ContentRootPath, "media")),
+    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "media")),
     RequestPath = "/media"
 });
-
-app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
 
 app.UseEndpoints(endpoints =>
 {
