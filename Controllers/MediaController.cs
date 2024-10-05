@@ -1,7 +1,6 @@
 ﻿using FamilyApp.API.Models;
 using FamilyApp.API.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Threading.Tasks;
@@ -10,7 +9,6 @@ namespace FamilyApp.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-   
     public class MediaController : ControllerBase
     {
         private readonly MediaService _mediaService;
@@ -55,7 +53,6 @@ namespace FamilyApp.API.Controllers
         [Authorize]
         public async Task<IActionResult> StreamMedia(string id)
         {
-            // Fetch media by file path (since id is not an ObjectId)
             var media = await _mediaService.GetMediaByIdAsync(id);
 
             if (media == null)
@@ -89,7 +86,6 @@ namespace FamilyApp.API.Controllers
         [Authorize]
         public async Task<IActionResult> DownloadMedia(string id)
         {
-            // Fetch media by file path instead of ObjectId
             var media = await _mediaService.GetMediaByIdAsync(id);
 
             if (media == null)
