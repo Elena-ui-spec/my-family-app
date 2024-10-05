@@ -21,7 +21,7 @@ namespace FamilyApp.API.Services
         private readonly EncryptionService _encryptionService;
         private readonly string _serverBaseUrl; // Base URL for serving files
 
-        public MediaService(IMongoClient client, string serverBaseUrl, string sharedFolderId, string serviceAccountJsonFilePath, EncryptionService encryptionService)
+        public MediaService(IMongoClient client, string serverBaseUrl, string sharedFolderId, string serviceAccountJson, EncryptionService encryptionService)
         {
             var database = client.GetDatabase("MyFamilyApp");
             _media = database.GetCollection<Media>("Media");
@@ -29,8 +29,8 @@ namespace FamilyApp.API.Services
             _sharedFolderId = sharedFolderId;
             _encryptionService = encryptionService;
 
-            // Authenticate using the service account
-            var credential = GoogleCredential.FromFile(serviceAccountJsonFilePath)
+            // Authenticate using the service account JSON from environment variable
+            var credential = GoogleCredential.FromJson(serviceAccountJson)
                 .CreateScoped(DriveService.ScopeConstants.DriveFile);
 
             // Initialize Google Drive service
