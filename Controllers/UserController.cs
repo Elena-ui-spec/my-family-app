@@ -1,6 +1,7 @@
 ﻿using FamilyApp.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -8,13 +9,17 @@ public class UserController : ControllerBase
 {
     private readonly UserService _userService;
     private readonly IWebHostEnvironment _env;
+    private readonly IConfiguration _configuration;
     private readonly string _jwtSecret;
 
-    public UserController(UserService userService, IWebHostEnvironment env)
+    public UserController(UserService userService, IWebHostEnvironment env, IConfiguration configuration)
     {
         _userService = userService;
         _env = env;
-        _jwtSecret = "TmVyMjRkYmRaZXNlcnQyU0lNaTZIN2NYRVRlc1pDWWY="; 
+        _configuration = configuration;
+
+        // Fetch JWT Secret from appsettings
+        _jwtSecret = _configuration["Jwt:SecretKey"];
     }
 
     [HttpPost("register")]
@@ -45,7 +50,6 @@ public class UserController : ControllerBase
         }
     }
 
-
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
@@ -63,9 +67,9 @@ public class UserController : ControllerBase
         }
 
         var accessToken = _userService.GenerateJwtToken(user);
-        var refreshToken = Guid.NewGuid().ToString(); 
+        var refreshToken = Guid.NewGuid().ToString();
         user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(1); 
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(1);
         await _userService.UpdateUserAsync(user);
 
         var cookieOptions = new CookieOptions
@@ -137,7 +141,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("all")]
-    [Authorize(Roles ="Admin")] 
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAllUsers()
     {
         try
@@ -158,7 +162,7 @@ public class UserController : ControllerBase
         try
         {
             await _userService.DeleteUserAsync(userId);
-            return Ok(new { message = "Utilizatorul a fost șterss." });
+            return Ok(new { message = "Utilizatorul a fost șters." });
         }
         catch (Exception ex)
         {
@@ -193,10 +197,8 @@ public class UserController : ControllerBase
         return DateTime.UtcNow >= user.RefreshTokenExpiryTime;
     }
 
-
     private bool IsRefreshTokenExpired(User user)
     {
         return user.RefreshTokenExpiryTime <= DateTime.UtcNow;
     }
-
 }

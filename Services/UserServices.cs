@@ -1,21 +1,31 @@
 ﻿using FamilyApp.API.Models;
 using FamilyApp.API.Repositories;
-using FamilyApp.API.Services;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using FamilyApp.API.Services;
 
 public class UserService
 {
     private readonly EncryptionService _encryptionService;
-    private readonly string _jwtSecret = "TmVyMjRkYmRaZXNlcnQyU0lNaTZIN2NYRVRlc1pDWWY=";
     private readonly IUserRepository _userRepository;
+    private readonly IConfiguration _configuration;
+    private readonly string _jwtSecret;
+    private readonly string _adminUsername;
+    private readonly string _adminPassword;
 
-    public UserService(EncryptionService encryptionService, IUserRepository userRepository)
+    public UserService(EncryptionService encryptionService, IUserRepository userRepository, IConfiguration configuration)
     {
         _encryptionService = encryptionService;
         _userRepository = userRepository;
+        _configuration = configuration;
+
+        // Load the JWT secret and admin credentials from appsettings
+        _jwtSecret = _configuration["Jwt:SecretKey"];
+        _adminUsername = _configuration["Admin:Username"];
+        _adminPassword = _configuration["Admin:Password"];
     }
 
     public string EncryptPassword(string password)
@@ -35,24 +45,24 @@ public class UserService
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(_jwtSecret);
         var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.Name, user.Username),
-        new Claim(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User")
-    };
+        {
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User")
+        };
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddDays(100),  
+            Expires = DateTime.UtcNow.AddDays(100),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
 
-      // added support for refresh token but we don't use it for now
+        // Support for refresh token
         var refreshToken = Guid.NewGuid().ToString();
         user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(100); 
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(100);
         user.Username = _encryptionService.Encrypt(user.Username);
         user.PasswordHash = _encryptionService.Encrypt(user.PasswordHash);
 
@@ -60,7 +70,6 @@ public class UserService
 
         return tokenHandler.WriteToken(token);
     }
-
 
     public async Task RegisterUserAsync(User newUser)
     {
@@ -150,8 +159,8 @@ public class UserService
         {
             var defaultAdmin = new User
             {
-                Username = "admin",
-                PasswordHash = _encryptionService.Encrypt("@aDmInSeCuRePas2191@"),
+                Username = _adminUsername,
+                PasswordHash = _encryptionService.Encrypt(_adminPassword),
                 IsAdmin = true,
                 IsApproved = true
             };
@@ -169,5 +178,4 @@ public class UserService
     {
         return await _userRepository.GetUserByRefreshTokenAsync(refreshToken);
     }
-
 }

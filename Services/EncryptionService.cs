@@ -7,13 +7,13 @@ namespace FamilyApp.API.Services
 {
     public class EncryptionService
     {
-        private readonly byte[] key;
-        private readonly byte[] iv;
+        private readonly byte[] _key;
+        private readonly byte[] _iv;
 
-        public EncryptionService()
+        public EncryptionService(string encryptionKey, string encryptionIV)
         {
-            key = Encoding.UTF8.GetBytes("f98hf73nGkN4Lc5pTv9P7Xg3dN8kR6q7");
-            iv = Encoding.UTF8.GetBytes("jG9pT7x8QwR2Mz1v");
+            _key = Encoding.UTF8.GetBytes(encryptionKey);  // Load from appsettings.json
+            _iv = Encoding.UTF8.GetBytes(encryptionIV);    // Load from appsettings.json
         }
 
         public string Encrypt(string plainText)
@@ -23,8 +23,8 @@ namespace FamilyApp.API.Services
 
             using (Aes aes = Aes.Create())
             {
-                aes.Key = key;
-                aes.IV = iv;
+                aes.Key = _key;
+                aes.IV = _iv;
                 ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
 
                 using (MemoryStream ms = new MemoryStream())
@@ -48,8 +48,8 @@ namespace FamilyApp.API.Services
 
             using (Aes aes = Aes.Create())
             {
-                aes.Key = key;
-                aes.IV = iv;
+                aes.Key = _key;
+                aes.IV = _iv;
                 ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
 
                 using (MemoryStream ms = new MemoryStream(Convert.FromBase64String(cipherText)))
