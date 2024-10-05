@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging; // Add this
 
 [Route("api/[controller]")]
 [ApiController]
@@ -10,16 +11,14 @@ public class UserController : ControllerBase
     private readonly UserService _userService;
     private readonly IWebHostEnvironment _env;
     private readonly IConfiguration _configuration;
-    private readonly string _jwtSecret;
+    private readonly ILogger<UserController> _logger; // Add logger
 
-    public UserController(UserService userService, IWebHostEnvironment env, IConfiguration configuration)
+    public UserController(UserService userService, IWebHostEnvironment env, IConfiguration configuration, ILogger<UserController> logger)
     {
         _userService = userService;
         _env = env;
         _configuration = configuration;
-
-        // Fetch JWT Secret from appsettings
-        _jwtSecret = _configuration["Jwt:SecretKey"];
+        _logger = logger; // Initialize logger
     }
 
     [HttpPost("register")]
@@ -58,11 +57,13 @@ public class UserController : ControllerBase
 
         if (user == null || !_userService.VerifyPassword(loginRequest.Password, user.PasswordHash))
         {
+            _logger.LogWarning("Invalid credentials for username: {Username}", loginRequest.Username); // Log warning
             return Unauthorized(new { message = "Invalid credentials" });
         }
 
         if (!user.IsApproved)
         {
+            _logger.LogWarning("User {Username} is not approved.", loginRequest.Username); // Log warning for not approved user
             return Unauthorized(new { message = "Your account is not yet approved." });
         }
 
@@ -111,7 +112,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("pending-users")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")] // Uncomment this line when debugging is finished
     public async Task<IActionResult> GetPendingUsers()
     {
         try
@@ -126,7 +127,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("approve-user")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")] // Uncomment this line when debugging is finished
     public async Task<IActionResult> ApproveUser([FromBody] string userId)
     {
         try
@@ -141,7 +142,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("all")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles ="Admin")] // Uncomment this line when debugging is finished
     public async Task<IActionResult> GetAllUsers()
     {
         try
@@ -156,7 +157,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("delete-user")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")] // Uncomment this line when debugging is finished
     public async Task<IActionResult> DeleteUser([FromBody] string userId)
     {
         try
