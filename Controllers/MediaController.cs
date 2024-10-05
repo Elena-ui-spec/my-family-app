@@ -22,10 +22,6 @@ namespace FamilyApp.API.Controllers
         [HttpOptions]
         public IActionResult HandlePreflightRequest()
         {
-            Response.Headers.Add("Access-Control-Allow-Origin", "https://ciucureanu-radacini.onrender.com");
-            Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE");
-            Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
-            Response.Headers.Add("Access-Control-Allow-Credentials", "true");
             return Ok();
         }
 
@@ -49,9 +45,6 @@ namespace FamilyApp.API.Controllers
                     story
                 );
 
-                Response.Headers.Add("Access-Control-Allow-Origin", "https://ciucureanu-radacini.onrender.com");
-                Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-
                 return Ok(media);
             }
         }
@@ -70,9 +63,6 @@ namespace FamilyApp.API.Controllers
             if (fileStream == null)
                 return NotFound();
 
-            Response.Headers.Add("Access-Control-Allow-Origin", "https://ciucureanu-radacini.onrender.com");
-            Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-
             return File(fileStream, media.FileType, enableRangeProcessing: true);
         }
 
@@ -81,10 +71,6 @@ namespace FamilyApp.API.Controllers
         public async Task<IActionResult> GetAllMedia([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9)
         {
             var mediaList = await _mediaService.GetPaginatedMediaAsync(pageNumber, pageSize);
-
-            Response.Headers.Add("Access-Control-Allow-Origin", "https://ciucureanu-radacini.onrender.com");
-            Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-
             return Ok(mediaList);
         }
 
@@ -93,10 +79,6 @@ namespace FamilyApp.API.Controllers
         public async Task<IActionResult> SearchMediaByPerson([FromQuery] string person, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var mediaList = await _mediaService.SearchMediaByPersonAsync(person, pageNumber, pageSize);
-
-            Response.Headers.Add("Access-Control-Allow-Origin", "https://ciucureanu-radacini.onrender.com");
-            Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-
             return Ok(mediaList);
         }
 
@@ -114,9 +96,6 @@ namespace FamilyApp.API.Controllers
             if (fileStream == null)
                 return NotFound();
 
-            Response.Headers.Add("Access-Control-Allow-Origin", "https://ciucureanu-radacini.onrender.com");
-            Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-
             return File(fileStream, media.FileType, Path.GetFileName(media.FilePath));
         }
 
@@ -125,10 +104,6 @@ namespace FamilyApp.API.Controllers
         public async Task<IActionResult> DeleteMedia(string id)
         {
             await _mediaService.DeleteMediaAsync(id);
-
-            Response.Headers.Add("Access-Control-Allow-Origin", "https://ciucureanu-radacini.onrender.com");
-            Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-
             return NoContent();
         }
     }

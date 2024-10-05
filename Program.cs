@@ -147,18 +147,6 @@ app.UseCors("AllowSpecificOrigin");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Serve static files from the media directory
-if (!Directory.Exists(Path.Combine(builder.Environment.ContentRootPath, "media")))
-{
-    Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "media"));
-}
-
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "media")),
-    RequestPath = "/media"
-});
-
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
