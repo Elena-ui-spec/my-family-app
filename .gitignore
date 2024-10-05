@@ -1,0 +1,15 @@
+﻿*.pem
+*.crt
+*.key
+*.der
+decrypted_private_key.pem
+extracted_public_key.pem
+*.json
+
+node_modules/
+package-lock.json
+
+appsettings.json
+
+bin/
+obj/
