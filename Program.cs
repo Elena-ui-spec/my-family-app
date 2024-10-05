@@ -51,13 +51,15 @@ builder.Services.AddSwaggerGen();
 // Allow all CORS origins, methods, and headers
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
+    options.AddPolicy("AllowSpecificOrigin", builder =>
     {
-        builder.AllowAnyOrigin()
+        builder.WithOrigins("https://ciucureanu-radacini.onrender.com") // Frontend URL
                .AllowAnyMethod()
-               .AllowAnyHeader();
+               .AllowAnyHeader()
+               .AllowCredentials(); // Allow credentials
     });
 });
+
 
 // Increase the limits for form data
 builder.Services.Configure<FormOptions>(options =>
