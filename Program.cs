@@ -48,14 +48,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Allow all origins, methods, and headers for CORS (open CORS policy)
+// Allow CORS only for your frontend domain
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
+    options.AddPolicy("AllowSpecificOrigin", builder =>
     {
-        builder.AllowAnyOrigin()
+        builder.WithOrigins("https://ciucureanu-radacini.onrender.com")
                .AllowAnyMethod()
-               .AllowAnyHeader(); // No credential requirement
+               .AllowAnyHeader()
+               .AllowCredentials(); // Allow credentials (cookies, auth)
     });
 });
 
@@ -140,8 +141,8 @@ using (var scope = app.Services.CreateScope())
 app.UseHttpsRedirection();
 app.UseRouting();
 
-// Use CORS with open policy
-app.UseCors("AllowAll");
+// Use CORS with specific policy for your frontend domain
+app.UseCors("AllowSpecificOrigin");
 
 app.UseAuthentication();
 app.UseAuthorization();
