@@ -138,8 +138,8 @@ using (var scope = app.Services.CreateScope())
     await userService.EnsureAdminUserExistsAsync();
 }
 
+app.UseCors("AllowSpecificOrigin");
 app.UseHttpsRedirection();
-app.UseCors("AllowSpecificOrigin"); // Use the "AllowAll" CORS policy
 
 // Serve static files from the media directory
 if (!Directory.Exists(Path.Combine(builder.Environment.ContentRootPath, "media")))
