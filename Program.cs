@@ -139,7 +139,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAll"); // Use the "AllowAll" CORS policy
+app.UseCors("AllowSpecificOrigin"); // Use the "AllowAll" CORS policy
 
 // Serve static files from the media directory
 if (!Directory.Exists(Path.Combine(builder.Environment.ContentRootPath, "media")))
