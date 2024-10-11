@@ -144,16 +144,24 @@ namespace FamilyApp.API.Services
 
         public async Task DeleteMediaAsync(string fileId)
         {
-            var media = await _media.Find(m => m.FilePath == fileId).FirstOrDefaultAsync();
+            var media = await _media.Find(m => m.Id == fileId).FirstOrDefaultAsync();
             if (media == null)
             {
                 return;
             }
 
-            // Delete file from Google Drive
-            await _driveService.Files.Delete(media.FilePath).ExecuteAsync();
-            await _media.DeleteOneAsync(m => m.FilePath == fileId);
+            try
+            {
+                await _driveService.Files.Delete(media.FilePath).ExecuteAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting file from Google Drive: {ex.Message}");
+            }
+
+            await _media.DeleteOneAsync(m => m.Id == fileId);
         }
+
 
         private async Task<string> UploadFileToGoogleDrive(byte[] fileData, string filename)
         {
