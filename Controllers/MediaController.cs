@@ -66,11 +66,15 @@ namespace FamilyApp.API.Controllers
             return File(fileStream, media.FileType, enableRangeProcessing: true);
         }
 
+        // Keep page size within sane bounds so a request can't force the
+        // in-memory search endpoints to materialize the whole collection.
+        private static int ClampPageSize(int pageSize) => Math.Clamp(pageSize, 1, 100);
+
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetAllMedia([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 9)
         {
-            var mediaList = await _mediaService.GetPaginatedMediaAsync(pageNumber, pageSize);
+            var mediaList = await _mediaService.GetPaginatedMediaAsync(pageNumber, ClampPageSize(pageSize));
             return Ok(mediaList);
         }
 
@@ -78,7 +82,15 @@ namespace FamilyApp.API.Controllers
         [Authorize]
         public async Task<IActionResult> SearchMediaByPerson([FromQuery] string person, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var mediaList = await _mediaService.SearchMediaByPersonAsync(person, pageNumber, pageSize);
+            var mediaList = await _mediaService.SearchMediaByPersonAsync(person, pageNumber, ClampPageSize(pageSize));
+            return Ok(mediaList);
+        }
+
+        [HttpGet("search/story")]
+        [Authorize]
+        public async Task<IActionResult> SearchMediaByStory([FromQuery] string story, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        {
+            var mediaList = await _mediaService.SearchMediaByStoryAsync(story, pageNumber, ClampPageSize(pageSize));
             return Ok(mediaList);
         }
 
