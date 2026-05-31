@@ -142,6 +142,32 @@ namespace FamilyApp.API.Services
             return new PaginatedList<MediaDTO>(mediaDTOs, filteredMedia.Count, pageNumber, pageSize);
         }
 
+        public async Task<PaginatedList<MediaDTO>> SearchMediaByStoryAsync(string keyword, int pageNumber, int pageSize)
+        {
+            var allMedia = await _media.Find(Builders<Media>.Filter.Empty).ToListAsync();
+            var filteredMedia = allMedia
+                .Where(m => m.Story != null && _encryptionService.Decrypt(m.Story).IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+                .ToList();
+
+            var paginatedMedia = filteredMedia
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var mediaDTOs = paginatedMedia.Select(m => new MediaDTO
+            {
+                Id = m.Id.ToString(),
+                Description = _encryptionService.Decrypt(m.Description ?? string.Empty),
+                Persons = m.Persons != null ? m.Persons.ConvertAll(p => _encryptionService.Decrypt(p)) : new List<string>(),
+                FileType = m.FileType,
+                FilePath = m.FilePath,
+                FileUrl = $"{_serverBaseUrl}/api/media/download/{m.FilePath}",
+                Story = _encryptionService.Decrypt(m.Story ?? string.Empty)
+            }).ToList();
+
+            return new PaginatedList<MediaDTO>(mediaDTOs, filteredMedia.Count, pageNumber, pageSize);
+        }
+
         public async Task DeleteMediaAsync(string fileId)
         {
             var media = await _media.Find(m => m.Id == fileId).FirstOrDefaultAsync();
